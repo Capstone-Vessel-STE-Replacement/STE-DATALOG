@@ -7,6 +7,7 @@ import serial
 import pynmea2
 import threading
 import shutil
+import smbus2
 from geopy.distance import geodesic
 
 ###################################################################################
@@ -268,7 +269,8 @@ def passive_mode():
 ##### JOSH CODE GOES HERE
 def radio():
 	print("doing stuff")		
-
+################################
+	
 def active_mode():
 	global current_mode
 	while current_mode == ACTIVE:
@@ -359,7 +361,7 @@ def downlink_status():
 	# fix later
 	return True
 ##################################
-
+	
 
 def main():
 	global current_mode
@@ -371,6 +373,7 @@ def main():
 			elif event.type == pygame.MOUSEBUTTONDOWN:
 				mode = check_button_press(pygame.mouse.get_pos())
 				if mode == "Stop":
+					current_mode = None # prevents it from hanging, remove last iteration of data logging
 					stop_event.set()
 					running = False
 				elif mode:
