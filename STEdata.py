@@ -6,6 +6,7 @@ import os
 import serial
 import pynmea2
 import threading
+import shutil
 from geopy.distance import geodesic
 
 ###################################################################################
@@ -13,14 +14,17 @@ from geopy.distance import geodesic
 import pygame
 import sys
 
+
 ##########################
 #### CONFIGURABLE DUTY CYCLES
-active_wait_time = 1
+active_wait_time = 0
 passive_wait_time = 1
+passive_distance_travelled = 30
 ##############################
 
 
 current_thread = None 
+stop_event = threading.Event()
 # Initialize Pygame
 
 pygame.init()
@@ -33,30 +37,51 @@ screen_height = 480
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Mode Selector')
 
+is_ready = True  # Or set to False as needed
+
 # Colors
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GRAY = (200, 200, 200)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
 
-# Define button attributes
-button_width = 120
-button_height = 50
+# Initial button attributes
 button_margin = 20
-button_y = screen_height - button_height - 20
+button_height = (screen_height // 5) - (2 * button_margin)  # Adjust for 5 buttons now
+button_width = screen_width - (2 * button_margin)
+button_x = button_margin
 
-# Button positions
+# Adjust Y positions for all buttons, making room for the new "Ready/Not Ready" button
+ready_indicator_y = button_margin
+standby_button_y = ready_indicator_y + button_height + button_margin
+active_button_y = standby_button_y + button_height + button_margin
+passive_button_y = active_button_y + button_height + button_margin
+stop_button_y = passive_button_y + button_height + button_margin
+
+# Updated button positions including "Ready/Not Ready"
 buttons = {
-    "Standby": (button_margin, button_y, button_width, button_height),
-    "Active": (screen_width//4 - button_width//2, button_y, button_width, button_height),
-    "Passive": (screen_width//2 - button_width//2, button_y, button_width, button_height),
-    "Stop": (screen_width - button_width - button_margin, button_y, button_width, button_height)
+    "Ready/Not Ready": (button_x, ready_indicator_y, button_width, button_height),
+    "Standby": (button_x, standby_button_y, button_width, button_height),
+    "Active": (button_x, active_button_y, button_width, button_height),
+    "Passive": (button_x, passive_button_y, button_width, button_height),
+    "Stop": (button_x, stop_button_y, button_width, button_height)
 }
 
 def draw_buttons():
+    screen.fill(WHITE)  # Clear screen before drawing buttons
     for text, rect in buttons.items():
-        pygame.draw.rect(screen, GRAY, rect)
+        button_color = GRAY
+        display_text = text
+
+        # Special handling for "Ready/Not Ready" button
+        if text == "Ready/Not Ready":
+            button_color = GREEN if is_ready else RED
+            display_text = "Ready" if is_ready else "Not Ready"
+        
+        pygame.draw.rect(screen, button_color, rect)
         font = pygame.font.Font(None, 36)
-        text_render = font.render(text, True, BLACK)
+        text_render = font.render(display_text, True, BLACK)
         text_rect = text_render.get_rect(center=(rect[0] + rect[2] / 2, rect[1] + rect[3] / 2))
         screen.blit(text_render, text_rect)
 
@@ -66,7 +91,6 @@ def check_button_press(pos):
             print(f"{text} button pressed")
             return text
     return None
-
 #####################################################
 # for gps time instead of built in time
 # Everything with gps is here
@@ -83,7 +107,7 @@ def get_gps_time():
                         return f'{gps_date}_{gps_time}'
             except pynmea2.ParseError:
                 continue
-    return None
+    return False
 
 
 def passive_gps_time():
@@ -140,7 +164,7 @@ log_file_dir = "/home/Lance/CAPSTONE"
 #current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 current_time = get_gps_time()
 
-file_name = f"DF_Vessel_{current_time}.txt"
+file_name = f"DF_Vessel_{current_time.replace(':', '-')}.txt"
 log_file_path = os.path.join(log_file_dir, file_name)
 
 # These are the modes
@@ -173,8 +197,8 @@ def change_mode(new_mode):
         current_thread = threading.Thread(target=passive_mode)
         current_thread.start()
     elif current_mode == STANDBY:
-        # No specific thread needed for STANDBY mode
-        current_thread = None
+        current_thread = threading.Thread(target=standby_mode)
+        current_thread.start()
 
 # Define the header
 header = "#Time_Logged\t#Tx_Start\t#Tone\t#Lat\t#Long\t#Power\t#Accuracy\t#Mode\n"
@@ -217,8 +241,8 @@ def passive_mode():
 	global current_mode
 	while current_mode == PASSIVE:
 		global previous_location, previous_transmit_time
-		minimum_distance = 30  # Minimum distance in feet before transmitting
-		minimum_time = 5  # Minimum time in seconds before transmitting
+		minimum_distance = passive_distance_travelled  # Minimum distance in feet before transmitting
+		minimum_time = passive_wait_time  # Minimum time in seconds before transmitting
 
 		current_location = get_gps_data()
 		# current_time = time.time()
@@ -238,7 +262,12 @@ def passive_mode():
 				previous_transmit_time = current_time
 
 		previous_location = current_location
-		time.sleep(passive_wait_time)  # Sleep for a bit before checking again		
+		time.sleep(0.1)  # Sleep for a bit before checking again		
+
+###############################################
+##### JOSH CODE GOES HERE
+def radio():
+	print("doing stuff")		
 
 def active_mode():
 	global current_mode
@@ -246,16 +275,94 @@ def active_mode():
 		current_location = get_gps_data()
 		# tx_start = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
 		tx_start = get_gps_time()
+		radio()
 		pdop = current_location['pdop'] if current_location['pdop'] else "N/A"
 		log_data(tx_start, tone_hold, current_location['lat'], current_location['lon'],"0", pdop)
-
 		
+		#############
+		#PUT REMOVABLE DRIVE NAME HERE
+		destination_path = '/media/Lance/789A-55B910'
+		try:
+			shutil.copy(log_file_path, destination_path)
+		except Exception as e:
+			print(f"{e}")
+
 		time.sleep(active_wait_time)
+		time.sleep(0.1)
 
 def standby_mode():
-	sleep(1)
+	global is_ready, current_mode
+	while current_mode == STANDBY and not stop_event.is_set():
+
+		# Checks for the standby mode requirements
+		gps_in_accuracy = is_gps_accurate()
+		gps_time = is_gps_time()
+		removable_storage = storage_ready()
+		rf_ready = rf_transmitter()
+		controller_ready = system_controller()
+		downlink_ready = downlink_status()
+
+		is_ready = all([gps_in_accuracy, gps_time, removable_storage, rf_ready, controller_ready, downlink_ready])
+
+		# testing purposes, lets you know what is wrong
+		if is_ready:
+			print("System ready")
+		else:
+			print("Checking conditions, SYSTEM NOT READY")
+			if not gps_in_accuracy:
+				print("GPS ACCURACY OUT OF RANGE")
+			if not gps_time:
+				print("GPS time NOT AQUIRED")
+			if not removable_storage:
+				print("Thumbdrive not found")
+			if not rf_ready:
+				print("Plug in the radio")
+			if not controller_ready:
+				print("System controller has a problem")
+			if not downlink_ready:
+				print("Mission planner error")
+
+		time.sleep(5)
+
+##################################
+#STANDBY MODE CHECKS
+def is_gps_accurate():
+	current_location = get_gps_data()
+	pdop = current_location['pdop'] if current_location['pdop'] else "N/A"
+	if pdop != "N/A":
+		pdop_value = float(pdop)
+		if pdop_value < 3.0:
+			print("PDOP is below 3.0")
+			return True
+		else:
+			print("PDOP IS ABOVE 3.0")
+			return False
+	else:
+		print("PDOP IS N/A")
+		return False
+
+def is_gps_time():
+	return bool(get_gps_time())
+
+def storage_ready():
+	return os.path.ismount('/media/Lance/789A-55B910') and os.access('/media/Lance/789A-55B910', os.W_OK)
+
+def rf_transmitter():
+	# dont know what to put here atm
+	return True
+
+def system_controller():
+	# fix later
+	return True
+
+def downlink_status():
+	# fix later
+	return True
+##################################
+
 
 def main():
+	global current_mode
 	running = True
 	while running:
 		for event in pygame.event.get():
@@ -264,8 +371,9 @@ def main():
 			elif event.type == pygame.MOUSEBUTTONDOWN:
 				mode = check_button_press(pygame.mouse.get_pos())
 				if mode == "Stop":
+					stop_event.set()
 					running = False
-				if mode:
+				elif mode:
 					change_mode(mode)
 
 		screen.fill(WHITE)
@@ -274,11 +382,6 @@ def main():
 
 	if current_thread is not None:
 		current_thread.join()
-	#gps_data = get_gps_data()
-	#tone="2 kHz"
-	#tx_start = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
-	#pdop = gps_data['pdop'] if gps_data['pdop'] else "N/A"
-	#log_data(tx_start, tone, gps_data['lat'], gps_data['lon'], "0", pdop)
 
 	pygame.quit()
 	sys.exit()
