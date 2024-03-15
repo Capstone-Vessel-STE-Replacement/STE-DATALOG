@@ -16,10 +16,6 @@ import radio
 storage_location = '/media/gdkita/USB DISK'
 
 ###################################################################################
-## THIS IS JUST A TEST FOR THE TOUCHSCREEN AND STE DATA CAPTURE
-import pygame
-import sys
-
 
 ##########################
 #### CONFIGURABLE DUTY CYCLES
@@ -31,72 +27,7 @@ passive_distance_travelled = 30
 
 current_thread = None 
 stop_event = threading.Event()
-# Initialize Pygame
 
-pygame.init()
-
-# Screen dimensions
-screen_width = 800
-screen_height = 480
-
-# Set up the display
-screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption('Mode Selector')
-
-is_ready = True  # Or set to False as needed
-
-# Colors
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-GRAY = (200, 200, 200)
-RED = (255, 0, 0)
-GREEN = (0, 255, 0)
-
-# Initial button attributes
-button_margin = 20
-button_height = (screen_height // 5) - (2 * button_margin)  # Adjust for 5 buttons now
-button_width = screen_width - (2 * button_margin)
-button_x = button_margin
-
-# Adjust Y positions for all buttons, making room for the new "Ready/Not Ready" button
-ready_indicator_y = button_margin
-standby_button_y = ready_indicator_y + button_height + button_margin
-active_button_y = standby_button_y + button_height + button_margin
-passive_button_y = active_button_y + button_height + button_margin
-stop_button_y = passive_button_y + button_height + button_margin
-
-# Updated button positions including "Ready/Not Ready"
-buttons = {
-    "Ready/Not Ready": (button_x, ready_indicator_y, button_width, button_height),
-    "Standby": (button_x, standby_button_y, button_width, button_height),
-    "Active": (button_x, active_button_y, button_width, button_height),
-    "Passive": (button_x, passive_button_y, button_width, button_height),
-    "Stop": (button_x, stop_button_y, button_width, button_height)
-}
-
-def draw_buttons():
-    screen.fill(WHITE)  # Clear screen before drawing buttons
-    for text, rect in buttons.items():
-        button_color = GRAY
-        display_text = text
-
-        # Special handling for "Ready/Not Ready" button
-        if text == "Ready/Not Ready":
-            button_color = GREEN if is_ready else RED
-            display_text = "Ready" if is_ready else "Not Ready"
-        
-        pygame.draw.rect(screen, button_color, rect)
-        font = pygame.font.Font(None, 36)
-        text_render = font.render(display_text, True, BLACK)
-        text_rect = text_render.get_rect(center=(rect[0] + rect[2] / 2, rect[1] + rect[3] / 2))
-        screen.blit(text_render, text_rect)
-
-def check_button_press(pos):
-    for text, rect in buttons.items():
-        if rect[0] < pos[0] < rect[0] + rect[2] and rect[1] < pos[1] < rect[1] + rect[3]:
-            print(f"{text} button pressed")
-            return text
-    return None
 #####################################################
 # for gps time instead of built in time
 # Everything with gps is here
@@ -372,31 +303,6 @@ def downlink_status():
 ##################################
 	
 
-def main():
-	global current_mode
-	running = True
-	while running:
-		for event in pygame.event.get():
-			if event.type == pygame.QUIT:
-				running = False
-			elif event.type == pygame.MOUSEBUTTONDOWN:
-				mode = check_button_press(pygame.mouse.get_pos())
-				if mode == "Stop":
-					current_mode = None # prevents it from hanging, remove last iteration of data logging
-					stop_event.set()
-					running = False
-				elif mode:
-					change_mode(mode)
-
-		screen.fill(WHITE)
-		draw_buttons()
-		pygame.display.flip()
-
-	if current_thread is not None:
-		current_thread.join()
-
-	pygame.quit()
-	sys.exit()
-
 if __name__ == "__main__":
-	main()
+    from HCUI import HCUIApp
+    HCUIApp().run() # run the Kivy application

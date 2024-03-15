@@ -1,0 +1,271 @@
+#:kivy 1.0.9
+#:import get_color_from_hex kivy.utils.get_color_from_hex
+# :import ButtonBehavior kivy.uix.behaviors.ButtonBehavior
+# imports here
+
+<InfoPopup>:
+    title: "" 
+    separator_height: 0
+    size_hint: None, None
+    size: 700, 1000
+    pos_hint: {'center_x': 0.3, 'center_y': 0.5}
+    BoxLayout:
+        orientation: 'vertical'
+        canvas.before:
+            Color:
+                rgba: get_color_from_hex('#7AADFA')
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [25]  
+        Label:
+            text: 'Longitude:'
+            color: 1, 1, 1, 1 
+            font_size: '15sp'
+            bold: True
+        Label:
+            text: 'Latitude:'
+            color: 1, 1, 1, 1 
+            font_size: '15sp'
+            bold: True
+        Label:
+            text: 'Tone:'
+            color: 1, 1, 1, 1 
+            font_size: '15sp'
+            bold: True
+        Label:
+            text: 'Transmissions Sent:'
+            color: 1, 1, 1, 1 
+            font_size: '15sp'
+            bold: True
+        
+        RoundedButton:
+            text: 'Close'
+            background_color: get_color_from_hex('#1F448C')  # Button color to match other buttons
+            color: 1, 1, 1, 1  # White text color
+            size_hint_y: None
+            height: '50dp'
+            font_size: '20sp'
+            bold: True
+            on_press: root.dismiss()
+
+
+            
+<TouchScreen>:
+
+    orientation: 'vertical'
+
+    BoxLayout: # BoxLayout for the top label
+        size_hint_y: None
+        height: '50dp'
+        padding: '5dp'
+        canvas.before:
+            Color:
+                rgba: get_color_from_hex('#7AADFA')
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [10]
+        Label: #Padding Label
+            text: 'GENERAL DYNAMICS'
+            color: 1, 1, 1, 1
+            size_hint_x: None
+            width: self.texture_size[0] + 40
+            font_size: '20sp'
+            bold: True
+        # Label: #separator label
+        #     text: ' '
+        #     color: 1, 1, 1, 1
+        #     size_hint_x: None
+        #     width: self.texture_size[0] + 80
+        #     font_size: '20sp'
+        #     bold: True
+
+        ActivationProgressBar:
+            id: activation_progress
+            size_hint_y: None
+            width: '.5dp'
+            height: dp(90)
+            
+        RoundedButton:
+            text: 'POWER'
+            background_color: get_color_from_hex('#1F448C')
+            size_hint_x: None
+            width: '140dp'
+            size_hint_y: 1
+            font_size: '20sp'
+            bold: True
+
+    GridLayout: #Main Grid Setup
+        cols: 2
+        spacing: '20dp'
+        padding: '25dp'
+
+        GridLayout: #Status Grid Layout
+            id: status_area
+            rows: 10
+            spacing: '10dp'
+            size_hint_x: None
+            width: '450dp'
+            canvas.before:
+                Color:
+                    rgba: get_color_from_hex('#7AADFA')
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [25]
+            # Status Labels
+            Label:
+                text: ''
+                color: 1, 1, 1, 1
+                size_hint_y: None
+                height: '5dp'
+                font_size: '20sp'
+                bold: True
+            Label:
+                text: 'OPERATING MODE'
+                color: 1, 1, 1, 1
+                size_hint_y: None
+                height: '30dp'
+                font_size: '20sp'
+                bold: True
+            Label:
+                text: 'READY: YES'
+                color: 1, 1, 1, 1
+                size_hint_y: None
+                height: '30dp'
+                font_size: '20sp'
+                bold: True
+            #add padding
+            Label:
+                text: ''
+                color: 1, 1, 1, 1
+                size_hint_y: None
+                height: '15dp'
+                font_size: '20sp'
+                bold: True
+
+            Label:
+                text: 'SD CARD:'
+                color: 1, 1, 1, 1
+                size_hint_y: None
+                height: '30dp'
+                font_size: '20sp'
+                bold: True
+            Label:
+                text: 'RF TRANSMITTOR:'
+                color: 1, 1, 1, 1
+                size_hint_y: None
+                height: '30dp'
+                font_size: '20sp'
+                bold: True
+            Label:
+                text: 'SYSTEM CONTROLLER:'
+                color: 1, 1, 1, 1   
+                size_hint_y: None
+                height: '30dp'
+                font_size: '20sp'
+                bold: True
+            Label:
+                text: 'DOWNLINK STATUS:'
+                color: 1, 1, 1, 1
+                size_hint_y: None
+                height: '30dp'
+                font_size: '20sp'
+                bold: True
+            Label:
+                text: ''
+                color: 1, 1, 1, 1
+                size_hint_y: None
+                height: '16dp'
+                font_size: '20sp'
+                bold: True
+
+            BoxLayout:
+                size_hint_x: 1
+                size_hint_y: None
+                height: '45dp'
+
+
+                Widget:  # This empty widget will take up 1/3 of the space on x plane
+                    size_hint_x: 0.33
+
+                RoundedButton:
+                    text: 'MORE INFO'
+                    background_color: get_color_from_hex('#1F448C')
+                    size_hint_x: None
+                    width: '200dp'
+                    size_hint_y: 1.1
+                    font_size: '20sp'
+                    bold: True
+                    on_release: root.toggle_info_popup()
+
+                Widget:  # This empty widget will also take up 1/3 of the space on x plane
+                    size_hint_x: 0.33
+    
+
+        GridLayout: # Second grid layout
+            id: buttons_area
+            rows: 5  #extra rows for space
+            spacing: '10dp'
+
+            BoxLayout: #Time Box
+                orientation: 'vertical'
+                size_hint_y: None
+                height: '125dp'
+                padding: 10
+                canvas.before:
+                    Color:
+                        rgba: get_color_from_hex('#7AADFA')
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [25] 
+
+                Label:
+                   # id: time_label
+                    text: '00:00'
+                    color: 1, 1, 1, 1
+                    size_hint_y: None
+                    height: '25dp'
+                    font_size: '25sp'
+                    bold: True
+                Widget:  # This empty widget will take up 1/3 of the space on x plane
+                    size_hint_x: 0.05
+
+            BoxLayout: # Operating States Button Box
+                orientation: 'vertical'
+                size_hint_y: None
+                height: '250dp'  
+                padding: 10
+                canvas.before:
+                    Color:
+                        rgba: get_color_from_hex('#7AADFA') 
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [15]
+
+                RoundedButton:
+                    text: 'ACTIVE'
+                    background_color: get_color_from_hex('#1F448C')
+                    size_hint: 1, 0.3 
+                    font_size: '20sp'
+                    bold: True
+                    on_release: app.root.activate_active_mode()
+
+                RoundedButton:
+                    text: 'PASSIVE'
+                    background_color: get_color_from_hex('#1F448C')
+                    size_hint: 1, 0.3  
+                    font_size: '20sp'
+                    bold: True
+                    on_release: app.root.activate_passive_mode()
+
+                RoundedButton:
+                    text: 'STANDBY'
+                    background_color: get_color_from_hex('#1F448C')
+                    size_hint: 1, 0.3  
+                    font_size: '20sp'
+                    bold: True
+                    on_release: app.root.activate_standby_mode()
