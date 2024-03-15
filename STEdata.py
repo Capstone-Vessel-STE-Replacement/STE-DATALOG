@@ -32,7 +32,6 @@ stop_event = threading.Event()
 # for gps time instead of built in time
 # Everything with gps is here
 def get_gps_time():
-    return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") # XXX this is only to skip
     with serial.Serial(gps_port, baudrate=gps_baudrate, timeout=1) as ser:
         for _ in range(40):  # Read multiple lines to find a valid time sentence
             line = ser.readline().decode('ascii', errors='ignore').strip()
@@ -49,7 +48,6 @@ def get_gps_time():
 
 
 def passive_gps_time():
-    return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") # XXX this is only to skip
     with serial.Serial(gps_port, baudrate=gps_baudrate, timeout=1) as ser:
         for _ in range(40):  # Read multiple lines to find a valid time sentence
             line = ser.readline().decode('ascii', errors='ignore').strip()
@@ -71,7 +69,6 @@ def passive_gps_time():
 def get_gps_data():
 	pdop = None  # Initialize PDOP
 	gps_data = {'lat': None, 'lon': None, 'pdop': None}
-	return {'lat': 33.4306, 'lon': -111.9256, 'pdop': 2.0} # XXX this is only to skip
 	with serial.Serial(gps_port, baudrate=gps_baudrate, timeout=1) as ser:
 		for _ in range(40):  # Increase range to ensure we read both GPGGA and GPGSA
 			line = ser.readline().decode('ascii', errors='ignore').strip()
