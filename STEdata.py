@@ -13,7 +13,7 @@ from geopy.distance import geodesic
 import radio
 
 # storage_location = '/media/Lance/789A-55B910'
-storage_location = '/media/gdkita/USB DISK'
+storage_location = '/media/gdkita/Removable Disk/CSE424/logs'
 
 ###################################################################################
 
@@ -96,7 +96,7 @@ def get_gps_data():
 ####################################################################################
 gps_port = '/dev/ttyUSB0'
 gps_baudrate = 4800
-tone_hold = "2"
+tone_hold = 1000 # hz tone created on for transmissions
 mode_lock = threading.Lock()
 
 # this will create the file
@@ -174,6 +174,8 @@ def calculate_distance(lock1, lock2):
 	distance_in_meters = geodesic(lock1, lock2).meters
 	return distance_in_meters * 3.28084
 
+def radio_overhead():
+	radio.play_tone(tone=tone_hold, milliseconds=1000, blocking=True)
 
 previous_location = None
 # previous_transmit_time = time.time()
@@ -195,21 +197,15 @@ def passive_mode():
 
 			if distance >= minimum_distance or time_elapsed >= minimum_time:
 				# Conditions met, log data
-				tone = "2 kHz"  # Example tone
+				radio_overhead()
 				# tx_start = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
 				tx_start = get_gps_time()
 				pdop = current_location['pdop'] if current_location['pdop'] else "N/A"
-				log_data(tx_start, tone, current_location['lat'], current_location['lon'], "0", pdop)
+				log_data(tx_start, str(tone_hold), current_location['lat'], current_location['lon'], "0", pdop) # TODO make the power represent something or remove it
 				previous_transmit_time = current_time
 
 		previous_location = current_location
 		time.sleep(0.1)  # Sleep for a bit before checking again		
-
-###############################################
-##### JOSH CODE GOES HERE
-def radio_overhead():
-    radio.play_tone()
-################################
 	
 def active_mode():
 	global current_mode
@@ -219,7 +215,7 @@ def active_mode():
 		tx_start = get_gps_time()
 		radio_overhead()
 		pdop = current_location['pdop'] if current_location['pdop'] else "N/A"
-		log_data(tx_start, tone_hold, current_location['lat'], current_location['lon'],"0", pdop)
+		log_data(tx_start, str(tone_hold), current_location['lat'], current_location['lon'],"0", pdop) # TODO make the power value represent something or remove it
 		
 		#############
 		#PUT REMOVABLE DRIVE NAME HERE
