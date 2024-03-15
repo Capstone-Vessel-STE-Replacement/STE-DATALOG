@@ -10,6 +10,11 @@ import shutil
 import smbus2
 from geopy.distance import geodesic
 
+import radio
+
+# storage_location = '/media/Lance/789A-55B910'
+storage_location = '/media/gdkita/USB DISK'
+
 ###################################################################################
 ## THIS IS JUST A TEST FOR THE TOUCHSCREEN AND STE DATA CAPTURE
 import pygame
@@ -18,7 +23,7 @@ import sys
 
 ##########################
 #### CONFIGURABLE DUTY CYCLES
-active_wait_time = 0
+active_wait_time = 1
 passive_wait_time = 1
 passive_distance_travelled = 30
 ##############################
@@ -96,6 +101,7 @@ def check_button_press(pos):
 # for gps time instead of built in time
 # Everything with gps is here
 def get_gps_time():
+    return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") # XXX this is only to skip
     with serial.Serial(gps_port, baudrate=gps_baudrate, timeout=1) as ser:
         for _ in range(40):  # Read multiple lines to find a valid time sentence
             line = ser.readline().decode('ascii', errors='ignore').strip()
@@ -112,6 +118,7 @@ def get_gps_time():
 
 
 def passive_gps_time():
+    return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") # XXX this is only to skip
     with serial.Serial(gps_port, baudrate=gps_baudrate, timeout=1) as ser:
         for _ in range(40):  # Read multiple lines to find a valid time sentence
             line = ser.readline().decode('ascii', errors='ignore').strip()
@@ -133,6 +140,7 @@ def passive_gps_time():
 def get_gps_data():
 	pdop = None  # Initialize PDOP
 	gps_data = {'lat': None, 'lon': None, 'pdop': None}
+	return {'lat': 33.4306, 'lon': -111.9256, 'pdop': 2.0} # XXX this is only to skip
 	with serial.Serial(gps_port, baudrate=gps_baudrate, timeout=1) as ser:
 		for _ in range(40):  # Increase range to ensure we read both GPGGA and GPGSA
 			line = ser.readline().decode('ascii', errors='ignore').strip()
@@ -161,7 +169,8 @@ tone_hold = "2"
 mode_lock = threading.Lock()
 
 # this will create the file
-log_file_dir = "/home/Lance/CAPSTONE"
+log_file_dir = "/home/gdkita/Documents"
+# log_file_dir = "/home/Lance/CAPSTONE" # XXX
 #current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 current_time = get_gps_time()
 
@@ -267,8 +276,8 @@ def passive_mode():
 
 ###############################################
 ##### JOSH CODE GOES HERE
-def radio():
-	print("doing stuff")		
+def radio_overhead():
+    radio.play_tone()
 ################################
 	
 def active_mode():
@@ -277,13 +286,13 @@ def active_mode():
 		current_location = get_gps_data()
 		# tx_start = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
 		tx_start = get_gps_time()
-		radio()
+		radio_overhead()
 		pdop = current_location['pdop'] if current_location['pdop'] else "N/A"
 		log_data(tx_start, tone_hold, current_location['lat'], current_location['lon'],"0", pdop)
 		
 		#############
 		#PUT REMOVABLE DRIVE NAME HERE
-		destination_path = '/media/Lance/789A-55B910'
+		destination_path = storage_location
 		try:
 			shutil.copy(log_file_path, destination_path)
 		except Exception as e:
@@ -347,7 +356,7 @@ def is_gps_time():
 	return bool(get_gps_time())
 
 def storage_ready():
-	return os.path.ismount('/media/Lance/789A-55B910') and os.access('/media/Lance/789A-55B910', os.W_OK)
+	return os.path.ismount(storage_location) and os.access(storage_location, os.W_OK)
 
 def rf_transmitter():
 	# dont know what to put here atm
