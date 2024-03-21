@@ -192,7 +192,7 @@ def passive_mode():
 			distance = calculate_distance((previous_location['lat'],previous_location['lon']), (current_location['lat'], current_location['lon']))
 			time_elapsed = current_time - previous_transmit_time
 
-			if distance >= minimum_distance or time_elapsed >= minimum_time:
+			if distance >= minimum_distance and time_elapsed >= minimum_time:
 				# Conditions met, log data
 				radio_overhead()
 				# tx_start = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
@@ -200,6 +200,11 @@ def passive_mode():
 				pdop = current_location['pdop'] if current_location['pdop'] else "N/A"
 				log_data(tx_start, str(tone_hold), current_location['lat'], current_location['lon'], "0", pdop) # TODO make the power represent something or remove it
 				previous_transmit_time = current_time
+				destination_path = storage_location
+				try:
+					shutil.copy(log_file_path, destination_path)
+				except Exception as e:
+					print(f"{e}")
 
 		previous_location = current_location
 		time.sleep(0.1)  # Sleep for a bit before checking again		
