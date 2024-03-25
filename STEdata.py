@@ -10,6 +10,8 @@ import shutil
 import smbus2
 from geopy.distance import geodesic
 
+import radio
+
 ###################################################################################
 ## THIS IS JUST A TEST FOR THE TOUCHSCREEN AND STE DATA CAPTURE
 import pygame
@@ -157,7 +159,7 @@ def get_gps_data():
 ####################################################################################
 gps_port = '/dev/ttyUSB0'
 gps_baudrate = 4800
-tone_hold = "2"
+tone_hold = 1000
 mode_lock = threading.Lock()
 
 # this will create the file
@@ -253,22 +255,30 @@ def passive_mode():
 			distance = calculate_distance((previous_location['lat'],previous_location['lon']), (current_location['lat'], current_location['lon']))
 			time_elapsed = current_time - previous_transmit_time
 
-			if distance >= minimum_distance or time_elapsed >= minimum_time:
+			if distance >= minimum_distance and time_elapsed >= minimum_time:
 				# Conditions met, log data
-				tone = "2 kHz"  # Example tone
+				# tone = "2 kHz"  # Example tone
+				radio_overhead()
 				# tx_start = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
 				tx_start = get_gps_time()
 				pdop = current_location['pdop'] if current_location['pdop'] else "N/A"
-				log_data(tx_start, tone, current_location['lat'], current_location['lon'], "0", pdop)
+				log_data(tx_start, str(tone_hold), current_location['lat'], current_location['lon'], "0", pdop)
 				previous_transmit_time = current_time
 
 		previous_location = current_location
-		time.sleep(0.1)  # Sleep for a bit before checking again		
+		#############
+		#PUT REMOVABLE DRIVE NAME HERE
+		destination_path = '/media/Lance/789A-55B9'
+		try:
+			shutil.copy(log_file_path, destination_path)
+		except Exception as e:
+			print(f"{e}")
+		time.sleep(0.25)  # Sleep for a bit before checking again		
 
 ###############################################
 ##### JOSH CODE GOES HERE
-def radio():
-	print("doing stuff")		
+def radio_overhead():
+	radio.play_tone(tone=tone_hold, milliseconds=1000, blocking=True)	
 ################################
 	
 def active_mode():
@@ -277,20 +287,20 @@ def active_mode():
 		current_location = get_gps_data()
 		# tx_start = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
 		tx_start = get_gps_time()
-		radio()
+		radio_overhead()
 		pdop = current_location['pdop'] if current_location['pdop'] else "N/A"
-		log_data(tx_start, tone_hold, current_location['lat'], current_location['lon'],"0", pdop)
+		log_data(tx_start, str(tone_hold), current_location['lat'], current_location['lon'],"0", pdop)
 		
 		#############
 		#PUT REMOVABLE DRIVE NAME HERE
-		destination_path = '/media/Lance/789A-55B910'
+		destination_path = '/media/Lance/789A-55B9'
 		try:
 			shutil.copy(log_file_path, destination_path)
 		except Exception as e:
 			print(f"{e}")
 
 		time.sleep(active_wait_time)
-		time.sleep(0.1)
+		time.sleep(0.25)
 
 def standby_mode():
 	global is_ready, current_mode
@@ -347,7 +357,7 @@ def is_gps_time():
 	return bool(get_gps_time())
 
 def storage_ready():
-	return os.path.ismount('/media/Lance/789A-55B910') and os.access('/media/Lance/789A-55B910', os.W_OK)
+	return os.path.ismount('/media/Lance/789A-55B9') and os.access('/media/Lance/789A-55B9', os.W_OK)
 
 def rf_transmitter():
 	# dont know what to put here atm
